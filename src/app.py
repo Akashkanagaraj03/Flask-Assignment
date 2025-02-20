@@ -9,6 +9,7 @@ from queries import (
     update_user_by_id,
     delete_user_by_id,
     patch_user_by_id,
+    get_user_statistics,
 )
 import logging
 
@@ -176,6 +177,12 @@ def patch_user(id):
             f"[/api/users/<id> - PATCH] Error while updating user: {response}"
         )
         return response, code
+
+
+@app.route("/api/summary", methods=["GET"])
+def get_statistics():
+    logging.info("[/api/summary - GET] Getting statistics.")
+    return get_user_statistics(session)
 
 
 if __name__ == "__main__":
