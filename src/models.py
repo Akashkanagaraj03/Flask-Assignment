@@ -1,13 +1,14 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 from sqlalchemy import create_engine
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine("sqlite:///src/database.db")
 
 
 class Base(DeclarativeBase):
     pass
 
 
+# Model for user table
 class User(Base):
     __tablename__ = "user"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -23,20 +24,20 @@ class User(Base):
 
 
 def create_user(
-    id, first_name, last_name, company_name, city, state, zip, email, web, age
+    id_, first_name, last_name, company_name, city, state, zip_, email, web, age
 ):
     session = Session(engine)
     with session.begin():
         try:
             session.add(
                 User(
-                    id=id,
+                    id=id_,
                     first_name=first_name,
                     last_name=last_name,
                     company_name=company_name,
                     city=city,
                     state=state,
-                    zip=zip,
+                    zip=zip_,
                     email=email,
                     web=web,
                     age=age,

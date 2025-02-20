@@ -5,7 +5,6 @@ from models import create_user
 def main():
     with open("users.json") as file:
         users = json.load(file)
-
         for user in users:
             create_user(
                 user["id"],
