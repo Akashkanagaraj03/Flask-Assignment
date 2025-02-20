@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models import create_user
-from queries import search_users, search_user_by_id
+from queries import search_users, search_user_by_id, update_user_by_id
 import logging
 
 # Set up basic configuration
@@ -98,7 +98,7 @@ def users():
 
 
 @app.route("/api/users/<int:id>", methods=["GET"])
-def get_user_by_id(id):
+def get_user(id):
     try:
         search, code = search_user_by_id(session, id)
     except Exception as e:
@@ -109,9 +109,27 @@ def get_user_by_id(id):
             logging.info("[/api/users/<id> - GET] User retrieved successfully")
         else:
             logging.error(
-                "[/api/users/<id> - GET] Error while fetching user. Check queries.py"
+                f"f[/api/users/<id> - GET] Error while fetching user. Check queries.py : {search}"
             )
         return search, code
+
+
+@app.route("/api/users/<int:id>", methods=["PUT"])
+def update_user(id):
+    user_data = request.get_json()
+
+    if user_data is None:
+        logging.error("[/api/users/{id} - PUT] No payload provided")
+        return jsonify({"error": "Invalid JSON"}), 400
+
+    response, code = update_user_by_id(session, id, user_data)
+
+    if code == 200:
+        logging.info("[/api/users/<id> - PUT] User updated successfully")
+        return response, code
+    else:
+        logging.error(f"[/api/users/<id> - PUT] Error while updating user: {response}")
+        return response, code
 
 
 if __name__ == "__main__":

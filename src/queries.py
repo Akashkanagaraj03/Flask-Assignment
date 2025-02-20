@@ -89,3 +89,38 @@ def search_user_by_id(session: Session, id: int) -> tuple[Response, int]:
         return jsonify({"message": "No users found"}), 404
 
     return build_json_user(query), 200
+
+
+def update_user_by_id(
+    session: Session, id: int, new_user: dict
+) -> tuple[Response, int]:
+    old_user = session.query(User).filter(User.id == id).first()
+
+    if not old_user:
+        return (
+            jsonify(
+                {
+                    "message": "No users found with the given id. Try creating a new user instead."
+                }
+            ),
+            404,
+        )
+
+    try:
+        old_user.first_name = new_user.get("first_name")
+        old_user.last_name = new_user.get("last_name")
+        old_user.company_name = new_user.get("company_name")
+        old_user.city = new_user.get("city")
+        old_user.state = new_user.get("state")
+        old_user.zip = new_user.get("zip")
+        old_user.email = new_user.get("email")
+        old_user.web = new_user.get("web")
+        old_user.age = new_user.get("age")
+
+    except Exception as e:
+        return jsonify({"message": f"Error: {e}"}), 404
+
+    else:
+        session.add(old_user)
+        session.commit()
+        return build_json_user(old_user), 200
