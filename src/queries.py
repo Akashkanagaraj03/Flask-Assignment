@@ -124,3 +124,62 @@ def update_user_by_id(
         session.add(old_user)
         session.commit()
         return build_json_user(old_user), 200
+
+
+def delete_user_by_id(session: Session, id: int) -> tuple[Response, int]:
+    try:
+        query = session.query(User)
+        if not query:
+            raise Exception("No users found with the given id.")
+        query = query.filter(User.id == id).first()
+        session.delete(query)
+
+    except Exception as e:
+        return jsonify({"message": f"Error when Deleting: {e}"}), 404
+
+    else:
+        session.commit()
+
+    return jsonify({"message": "User successfully deleted."}), 200
+
+
+def patch_user_by_id(session: Session, id: int, new_user: dict) -> tuple[Response, int]:
+    old_user = session.query(User).filter(User.id == id).first()
+
+    if not old_user:
+        return (
+            jsonify(
+                {
+                    "message": "No users found with the given id. Try creating a new user instead."
+                }
+            ),
+            404,
+        )
+
+    try:
+        if "first_name" in new_user:
+            old_user.first_name = new_user.get("first_name")
+        if "last_name" in new_user:
+            old_user.last_name = new_user.get("last_name")
+        if "company_name" in new_user:
+            old_user.company_name = new_user.get("company_name")
+        if "city" in new_user:
+            old_user.city = new_user.get("city")
+        if "state" in new_user:
+            old_user.state = new_user.get("state")
+        if "zip" in new_user:
+            old_user.zip = new_user.get("zip")
+        if "email" in new_user:
+            old_user.email = new_user.get("email")
+        if "web" in new_user:
+            old_user.web = new_user.get("web")
+        if "age" in new_user:
+            old_user.age = new_user.get("age")
+
+    except Exception as e:
+        return jsonify({"message": f"Error: {e}"}), 404
+
+    else:
+        session.add(old_user)
+        session.commit()
+        return build_json_user(old_user), 200

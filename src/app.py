@@ -3,7 +3,13 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models import create_user
-from queries import search_users, search_user_by_id, update_user_by_id
+from queries import (
+    search_users,
+    search_user_by_id,
+    update_user_by_id,
+    delete_user_by_id,
+    patch_user_by_id,
+)
 import logging
 
 # Set up basic configuration
@@ -129,6 +135,46 @@ def update_user(id):
         return response, code
     else:
         logging.error(f"[/api/users/<id> - PUT] Error while updating user: {response}")
+        return response, code
+
+
+@app.route("/api/users/<int:id>", methods=["DELETE"])
+def delete_user(id):
+    try:
+        result, code = delete_user_by_id(session, id)
+
+    except Exception as e:
+        logging.error(f"[/api/users/<id> - DELETE] Error while Deleting user: {e}")
+        return jsonify({"Error": "Something went wrong, refer logs"}), 500
+
+    else:
+        if code == 200:
+            logging.info("[/api/users/<id> - DELETE] User deleted successfully")
+            return result, code
+        else:
+            logging.error(
+                f"[/api/users/<id> - DELETE] Error while deleting user: {result}"
+            )
+            return result, code
+
+
+@app.route("/api/users/<int:id>", methods=["PATCH"])
+def patch_user(id):
+    user_data = request.get_json()
+
+    if user_data is None:
+        logging.error("[/api/users/{id} - PATCH] No payload provided")
+        return jsonify({"error": "Invalid JSON"}), 400
+
+    response, code = patch_user_by_id(session, id, user_data)
+
+    if code == 200:
+        logging.info("[/api/users/<id> - PATCH] User updated successfully")
+        return response, code
+    else:
+        logging.error(
+            f"[/api/users/<id> - PATCH] Error while updating user: {response}"
+        )
         return response, code
 
 
