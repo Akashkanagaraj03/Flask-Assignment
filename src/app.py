@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models import create_user
-from queries import search_users
+from queries import search_users, search_user_by_id
 import logging
 
 # Set up basic configuration
@@ -52,7 +52,7 @@ def users():
         with session.begin():
             try:
                 # fetch user records
-                users = search_users(session, search, sort, page, limit)
+                users, code = search_users(session, search, sort, page, limit)
 
             except Exception as e:
                 logging.error(f"[/api/users - GET] Error while fetching users: {e}")
@@ -60,8 +60,13 @@ def users():
                 return jsonify({"Error": "Something went wrong, refer logs"}), 500
 
             else:
-                logging.info("[/api/users - GET] Users retrieved successfully")
-                return users
+                if code == 200:
+                    logging.info("[/api/users - GET] Users retrieved successfully")
+                else:
+                    logging.error(
+                        "[/api/users - GET] Error while fetching users. Refer queries.py"
+                    )
+                return users, code
 
     elif request.method == "POST":  # to-do implement if user already exists
         user_data = request.get_json()
@@ -89,17 +94,24 @@ def users():
             return jsonify({"Error": "Something went wrong, refer logs"}), 500
         else:
             logging.info("[/api/users - POST] User created successfully")
-            return jsonify({"message": "Data received successfully!"})
+            return jsonify({"message": "Data received successfully!"}), 200
 
 
-@app.route("/update-students/<int:id>", methods=["PUT"])
-def update_student(id):
-    pass
-    # student_data = request.get_json()
-    #
-    # name = student_data.get("name")
-    # age = student_data.get("age")
-    # email = student_data.get("email")
+@app.route("/api/users/<int:id>", methods=["GET"])
+def get_user_by_id(id):
+    try:
+        search, code = search_user_by_id(session, id)
+    except Exception as e:
+        logging.error(f"[/api/users/<id> - GET] Error while fetching user: {e}")
+        return jsonify({"Error": "Something went wrong, refer logs"}), 500
+    else:
+        if code == 200:
+            logging.info("[/api/users/<id> - GET] User retrieved successfully")
+        else:
+            logging.error(
+                "[/api/users/<id> - GET] Error while fetching user. Check queries.py"
+            )
+        return search, code
 
 
 if __name__ == "__main__":
