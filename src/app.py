@@ -260,7 +260,7 @@ def get_statistics():
     if not verify_token(request.headers.get("Authorization"), "/api/summary - GET"):
         return "Invalid token", 401
 
-    logging.info("[/api/summary - GET] Getting statistics.")
+    logging.info("[/api/summary - GET] Getting statistics for db.")
     return get_user_statistics(session)
 
 
