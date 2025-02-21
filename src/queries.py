@@ -2,29 +2,45 @@ from flask import jsonify, Response
 from sqlalchemy import or_, asc, desc, func, case
 from sqlalchemy.orm import Session, Query
 from models import User
+import logging
 
-# engine = create_engine("sqlite:///database.db")
+# Set up basic configuration
+logging.basicConfig(
+    level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
+    filename="queries.log",  # output to file
+)
 
 
 def build_json_user(user):
-    return jsonify(
-        {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "company_name": user.company_name,
-            "city": user.city,
-            "state": user.state,
-            "zip": user.zip,
-            "email": user.email,
-            "web": user.web,
-            "age": user.age,
-        }
-    )
+    json = jsonify({})
+    try:
+        json = jsonify(
+            {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "company_name": user.company_name,
+                "city": user.city,
+                "state": user.state,
+                "zip": user.zip,
+                "email": user.email,
+                "web": user.web,
+                "age": user.age,
+            }
+        )
+
+    except Exception as e:
+        logging.error(f"Error when building json for single user: {e}")
+    else:
+        logging.info(f"Successfully built json for single user: {user.id}")
+    finally:
+        return json
 
 
 def build_json_users(query: Query) -> Response:
     user_list = []
+    json = jsonify({})
     for user in query:
         print(user)
         user_list.append(
@@ -41,12 +57,23 @@ def build_json_users(query: Query) -> Response:
                 "age": user.age,
             }
         )
-    return jsonify(user_list)
+
+    try:
+        json = jsonify(user_list)
+    except Exception as e:
+        logging.error(f"Error when building json for users: {e}")
+
+    else:
+        logging.info(f"Successfully built json for users: {len(user_list)}")
+
+    finally:
+        return json
 
 
 def search_users(
     session: Session, search: str = "", sort: str = "id", page: int = 1, limit: int = 5
 ) -> tuple[Response, int]:
+    logging.info("Searching users")
     query = session.query(User)
     if not search == "":
         query = query.filter(
@@ -66,7 +93,7 @@ def search_users(
         sort_column = getattr(User, sort)
 
     except AttributeError:
-        print(f"Invalid sort field: '{sort}', using ID(ASC) instead.")
+        logging.info(f"Invalid sort field: '{sort}', using ID(ASC) instead.")
         sort_column = getattr(User, "id")
         order = asc
 
@@ -76,8 +103,10 @@ def search_users(
     query.all()
 
     if query.count() == 0:
+        logging.info("No users found.")
         return jsonify({"message": "No users found"}), 404
 
+    logging.info(f"Found {query.count()} users")
     return build_json_users(query), 200
 
 
@@ -86,8 +115,10 @@ def search_user_by_id(session: Session, id: int) -> tuple[Response, int]:
     query = query.filter(User.id == id).first()
 
     if not query:
+        logging.info(f"No user with id {id} found.")
         return jsonify({"message": "No users found"}), 404
 
+    logging.info(f"User with id {id} found.")
     return build_json_user(query), 200
 
 
@@ -97,6 +128,7 @@ def update_user_by_id(
     old_user = session.query(User).filter(User.id == id).first()
 
     if not old_user:
+        logging.info(f"No user with id {id} found.")
         return (
             jsonify(
                 {
@@ -118,11 +150,13 @@ def update_user_by_id(
         old_user.age = new_user.get("age")
 
     except Exception as e:
+        logging.error(f"Error when updating user: {e}")
         return jsonify({"message": f"Error: {e}"}), 404
 
     else:
         session.add(old_user)
         session.commit()
+        logging.info(f"Successfully updated user: {old_user.id}")
         return build_json_user(old_user), 200
 
 
@@ -135,10 +169,12 @@ def delete_user_by_id(session: Session, id: int) -> tuple[Response, int]:
         session.delete(query)
 
     except Exception as e:
+        logging.error(f"Error when deleting user: {e}")
         return jsonify({"message": f"Error when Deleting: {e}"}), 404
 
     else:
         session.commit()
+        logging.info(f"Successfully deleted user: {id}")
 
     return jsonify({"message": "User successfully deleted."}), 200
 
@@ -147,6 +183,7 @@ def patch_user_by_id(session: Session, id: int, new_user: dict) -> tuple[Respons
     old_user = session.query(User).filter(User.id == id).first()
 
     if not old_user:
+        logging.info(f"No user with id {id} found.")
         return (
             jsonify(
                 {
@@ -177,11 +214,13 @@ def patch_user_by_id(session: Session, id: int, new_user: dict) -> tuple[Respons
             old_user.age = new_user.get("age")
 
     except Exception as e:
+        logging.error(f"Error when patching user: {e}")
         return jsonify({"message": f"Error: {e}"}), 404
 
     else:
         session.add(old_user)
         session.commit()
+        logging.info(f"Successfully updated user: {old_user.id}")
         return build_json_user(old_user), 200
 
 
@@ -238,4 +277,5 @@ def get_user_statistics(session: Session) -> tuple[Response, int]:
         ],
     }
 
+    logging.info("Statistics fetched.")
     return jsonify(stats), 200
