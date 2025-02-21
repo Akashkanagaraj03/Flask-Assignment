@@ -4,7 +4,7 @@ import logging
 
 
 try:
-    engine = create_engine("sqlite:///src/database.db")
+    engine = create_engine("sqlite:///database.db")
 except Exception as e:
     logging.critical(f"Error: {e}")
 else:
