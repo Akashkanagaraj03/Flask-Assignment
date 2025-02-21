@@ -1,5 +1,7 @@
 # imports
 from flask import Flask, request, jsonify, session as flask_session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -30,7 +32,6 @@ except Exception as e:
 else:
     logging.info("[__main__] Database connection established")
 
-
 # create app instance
 # to-do add commits
 try:
@@ -43,8 +44,16 @@ else:
     logging.info("[__main__] Flask application initialized")
 
 
+# setting up api call limits
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+)
+
+
 # default page
 @app.route("/", methods=["GET"])
+@limiter.limit("10 per hour")
 def my_first_app():
     if not flask_session.get("logged_in"):
         logging.info("[/] User not logged in")
@@ -110,6 +119,9 @@ def users():
         return "Invalid token", 401
 
     if request.method == "GET":  # log
+        # limiter
+        limiter.limit("10 per hour")
+
         # get args
         page = request.args.get("page", 1, type=int)
         limit = request.args.get("limit", 5, type=int)
@@ -165,6 +177,7 @@ def users():
 
 
 @app.route("/api/users/<int:id>", methods=["GET"])
+@limiter.limit("10 per hour")
 def get_user(id):
     if not verify_token(request.headers.get("Authorization"), f"/api/users/{id} - GET"):
         return "Invalid token", 401
@@ -256,6 +269,7 @@ def patch_user(id):
 
 
 @app.route("/api/summary", methods=["GET"])
+@limiter.limit("10 per hour")
 def get_statistics():
     if not verify_token(request.headers.get("Authorization"), "/api/summary - GET"):
         return "Invalid token", 401

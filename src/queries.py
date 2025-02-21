@@ -80,6 +80,7 @@ def search_users(
             or_(
                 User.first_name.ilike(f"%{search}%"),
                 User.last_name.ilike(f"%{search}%"),
+                User.city.ilike(f"%{search}%"),
             )
         )
 
