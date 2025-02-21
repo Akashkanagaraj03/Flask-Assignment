@@ -1,5 +1,6 @@
 # imports
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session as flask_session
+import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models import create_user
@@ -17,6 +18,7 @@ import logging
 logging.basicConfig(
     level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
     format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
+    filename="app.log",  # output to file
 )
 
 # connecting to database.db and creating a session
@@ -33,6 +35,7 @@ else:
 # to-do add commits
 try:
     app = Flask(__name__)
+    app.config["SECRET_KEY"] = "secret"
 except Exception as e:
     logging.error(e)
     raise e
@@ -43,12 +46,69 @@ else:
 # default page
 @app.route("/", methods=["GET"])
 def my_first_app():
-    return "Application is running"
+    if not flask_session.get("logged_in"):
+        logging.info("[/] User not logged in")
+        return "POST to /login to log in", 401
+
+    return "Logged in", 200
+
+
+# login page
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.args.get("uid") == "admin" and request.args.get("pass") == "1243":
+        flask_session["logged_in"] = True
+        token = jwt.encode(
+            {"user": request.args.get("uid")},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+        logging.info("[/login] Logged in")
+        return jsonify({"token": token})
+
+    else:
+        flask_session["logged_in"] = False
+        logging.info("[/login] Failed to log in, check credentials")
+        return "Failed to log in", 401
+
+
+# Method to verify JWT token
+def verify_token(token: str, api: str):
+    if not token:
+        logging.error(f"[{api}] [AUTH]: Token not found")
+        return False
+
+    token = token.split(" ")[1]  # Assuming it's in the format "Bearer <token>"
+
+    try:
+        jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        logging.error(f"[{api}] [AUTH]: Expired Token")
+        return False
+    except jwt.InvalidTokenError:
+        logging.error(f"[{api}] [AUTH]: Invalid Token")
+        return False
+    else:
+        logging.info(f"[{api}] [AUTH]: Token verified")
+        return True
+
+
+# dummy api to check JWT auth
+@app.route("/check_auth", methods=["GET", "POST"])
+def check_auth():
+    # Extract token from Authorization header
+    if verify_token(request.headers.get("Authorization"), "/check_auth - GET/POST"):
+        return "Success", 200
+    else:
+        return "Invalid token", 401
 
 
 # API for fetching/creating user records
 @app.route("/api/users", methods=["GET", "POST"])
 def users():
+    if not verify_token(request.headers.get("Authorization"), "/api/users - GET/POST"):
+        return "Invalid token", 401
+
     if request.method == "GET":  # log
         # get args
         page = request.args.get("page", 1, type=int)
@@ -106,6 +166,9 @@ def users():
 
 @app.route("/api/users/<int:id>", methods=["GET"])
 def get_user(id):
+    if not verify_token(request.headers.get("Authorization"), f"/api/users/{id} - GET"):
+        return "Invalid token", 401
+
     try:
         search, code = search_user_by_id(session, id)
     except Exception as e:
@@ -123,10 +186,13 @@ def get_user(id):
 
 @app.route("/api/users/<int:id>", methods=["PUT"])
 def update_user(id):
+    if not verify_token(request.headers.get("Authorization"), f"/api/users/{id} - PUT"):
+        return "Invalid token", 401
+
     user_data = request.get_json()
 
     if user_data is None:
-        logging.error("[/api/users/{id} - PUT] No payload provided")
+        logging.error("[/api/users/{id} - [PUT] No payload provided")
         return jsonify({"error": "Invalid JSON"}), 400
 
     response, code = update_user_by_id(session, id, user_data)
@@ -141,6 +207,11 @@ def update_user(id):
 
 @app.route("/api/users/<int:id>", methods=["DELETE"])
 def delete_user(id):
+    if not verify_token(
+        request.headers.get("Authorization"), f"/api/users/{id} - DELETE"
+    ):
+        return "Invalid token", 401
+
     try:
         result, code = delete_user_by_id(session, id)
 
@@ -161,6 +232,11 @@ def delete_user(id):
 
 @app.route("/api/users/<int:id>", methods=["PATCH"])
 def patch_user(id):
+    if not verify_token(
+        request.headers.get("Authorization"), f"/api/users/{id} - PATCH"
+    ):
+        return "Invalid token", 401
+
     user_data = request.get_json()
 
     if user_data is None:
@@ -181,6 +257,9 @@ def patch_user(id):
 
 @app.route("/api/summary", methods=["GET"])
 def get_statistics():
+    if not verify_token(request.headers.get("Authorization"), "/api/summary - GET"):
+        return "Invalid token", 401
+
     logging.info("[/api/summary - GET] Getting statistics.")
     return get_user_statistics(session)
 
