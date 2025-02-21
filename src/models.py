@@ -1,13 +1,6 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import create_engine
 import logging
-
-# Set up basic configuration
-logging.basicConfig(
-    level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
-    format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
-    filename="app.log",  # output to file
-)
 
 
 try:
@@ -36,40 +29,6 @@ class User(Base):
     email: Mapped[str] = mapped_column()
     web: Mapped[str] = mapped_column()
     age: Mapped[int] = mapped_column()
-
-
-def create_user(
-    id_, first_name, last_name, company_name, city, state, zip_, email, web, age
-):
-    session = Session(engine)
-    with session.begin():
-        try:
-            session.add(
-                User(
-                    id=id_,
-                    first_name=first_name,
-                    last_name=last_name,
-                    company_name=company_name,
-                    city=city,
-                    state=state,
-                    zip=zip_,
-                    email=email,
-                    web=web,
-                    age=age,
-                )
-            )
-        except Exception as e:
-            logging.error(f"Error: {e}")
-            print(f"Error:{e}")
-            session.rollback()
-
-        else:
-            session.commit()
-
-        finally:
-            session.close()
-            logging.info("Data with user id:{id} created.")
-    return
 
 
 def main():

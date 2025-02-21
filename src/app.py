@@ -1,11 +1,13 @@
 # imports
+import logging
+
+
 from flask import Flask, request, jsonify, session as flask_session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from models import create_user
 from queries import (
     search_users,
     search_user_by_id,
@@ -13,8 +15,8 @@ from queries import (
     delete_user_by_id,
     patch_user_by_id,
     get_user_statistics,
+    create_users,
 )
-import logging
 
 # Set up basic configuration
 logging.basicConfig(
@@ -26,14 +28,12 @@ logging.basicConfig(
 # connecting to database.db and creating a session
 try:
     engine = create_engine("sqlite:///src/database.db")
-    session = Session(engine)
 except Exception as e:
     logging.critical(f"[__main__] Database connection failed: {e}")
 else:
     logging.info("[__main__] Database connection established")
 
 # create app instance
-# to-do add commits
 try:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "secret"
@@ -118,7 +118,8 @@ def users():
     if not verify_token(request.headers.get("Authorization"), "/api/users - GET/POST"):
         return "Invalid token", 401
 
-    if request.method == "GET":  # log
+    if request.method == "GET":
+        session = Session(engine)
         # limiter
         limiter.limit("10 per hour")
 
@@ -128,52 +129,37 @@ def users():
         sort = request.args.get("sort", "id", type=str)
         search = request.args.get("search", "", type=str)
 
-        with session.begin():
-            try:
-                # fetch user records
-                users, code = search_users(session, search, sort, page, limit)
+        # fetch user records
+        result, code = search_users(session, search, sort, page, limit)
+        if code == 200:
+            logging.info("[/api/users - GET] Users retrieved successfully")
+        else:
+            logging.error(
+                f"[/api/users - GET] Error while fetching users. Refer queries.py: {result}"
+            )
 
-            except Exception as e:
-                logging.error(f"[/api/users - GET] Error while fetching users: {e}")
-                session.rollback()
-                return jsonify({"Error": "Something went wrong, refer logs"}), 500
+        session.close()
+        return result, code
 
-            else:
-                if code == 200:
-                    logging.info("[/api/users - GET] Users retrieved successfully")
-                else:
-                    logging.error(
-                        "[/api/users - GET] Error while fetching users. Refer queries.py"
-                    )
-                return users, code
-
-    elif request.method == "POST":  # to-do implement if user already exists
+    elif request.method == "POST":
+        session = Session(engine)
         user_data = request.get_json()
 
         if user_data is None:
             logging.error("[/api/users - POST] No user data provided")
             return jsonify({"error": "Invalid JSON"}), 400
 
-        try:
-            for user in user_data:
-                create_user(
-                    user["id"],
-                    user["first_name"],
-                    user["last_name"],
-                    user["company_name"],
-                    user["city"],
-                    user["state"],
-                    user["zip"],
-                    user["email"],
-                    user["web"],
-                    user["age"],
-                )
-        except Exception as e:
-            logging.error(f"[/api/users - POST] Error while creating user: {e}")
-            return jsonify({"Error": "Something went wrong, refer logs"}), 500
+        result, code = create_users(user_data, session)
+
+        if code == 200:
+            logging.info("[/api/users - POST] Users created successfully")
         else:
-            logging.info("[/api/users - POST] User created successfully")
-            return jsonify({"message": "Data received successfully!"}), 200
+            logging.error(
+                f"[/api/users - POST] Error while adding users. Refer queries.py: {result}"
+            )
+
+        session.close()
+        return result, code
 
 
 @app.route("/api/users/<int:id>", methods=["GET"])
@@ -181,20 +167,19 @@ def users():
 def get_user(id):
     if not verify_token(request.headers.get("Authorization"), f"/api/users/{id} - GET"):
         return "Invalid token", 401
+    session = Session(engine)
 
-    try:
-        search, code = search_user_by_id(session, id)
-    except Exception as e:
-        logging.error(f"[/api/users/<id> - GET] Error while fetching user: {e}")
-        return jsonify({"Error": "Something went wrong, refer logs"}), 500
+    search, code = search_user_by_id(session, id)
+
+    if code == 200:
+        logging.info("[/api/users/<id> - GET] User retrieved successfully")
     else:
-        if code == 200:
-            logging.info("[/api/users/<id> - GET] User retrieved successfully")
-        else:
-            logging.error(
-                f"f[/api/users/<id> - GET] Error while fetching user. Check queries.py : {search}"
-            )
-        return search, code
+        logging.error(
+            f"f[/api/users/<id> - GET] Error while fetching user. Check queries.py : {search}"
+        )
+
+    session.close()
+    return search, code
 
 
 @app.route("/api/users/<int:id>", methods=["PUT"])
@@ -202,6 +187,7 @@ def update_user(id):
     if not verify_token(request.headers.get("Authorization"), f"/api/users/{id} - PUT"):
         return "Invalid token", 401
 
+    session = Session(engine)
     user_data = request.get_json()
 
     if user_data is None:
@@ -212,10 +198,11 @@ def update_user(id):
 
     if code == 200:
         logging.info("[/api/users/<id> - PUT] User updated successfully")
-        return response, code
     else:
         logging.error(f"[/api/users/<id> - PUT] Error while updating user: {response}")
-        return response, code
+
+    session.close()
+    return response, code
 
 
 @app.route("/api/users/<int:id>", methods=["DELETE"])
@@ -225,22 +212,16 @@ def delete_user(id):
     ):
         return "Invalid token", 401
 
-    try:
-        result, code = delete_user_by_id(session, id)
+    session = Session(engine)
+    result, code = delete_user_by_id(session, id)
+    logging.error("[/api/users/<id> - DELETE] Error while Deleting user")
 
-    except Exception as e:
-        logging.error(f"[/api/users/<id> - DELETE] Error while Deleting user: {e}")
-        return jsonify({"Error": "Something went wrong, refer logs"}), 500
-
+    if code == 200:
+        logging.info("[/api/users/<id> - DELETE] User deleted successfully")
     else:
-        if code == 200:
-            logging.info("[/api/users/<id> - DELETE] User deleted successfully")
-            return result, code
-        else:
-            logging.error(
-                f"[/api/users/<id> - DELETE] Error while deleting user: {result}"
-            )
-            return result, code
+        logging.error(f"[/api/users/<id> - DELETE] Error while deleting user: {result}")
+    session.close()
+    return result, code
 
 
 @app.route("/api/users/<int:id>", methods=["PATCH"])
@@ -256,16 +237,19 @@ def patch_user(id):
         logging.error("[/api/users/{id} - PATCH] No payload provided")
         return jsonify({"error": "Invalid JSON"}), 400
 
+    session = Session(engine)
     response, code = patch_user_by_id(session, id, user_data)
 
     if code == 200:
         logging.info("[/api/users/<id> - PATCH] User updated successfully")
-        return response, code
+
     else:
         logging.error(
             f"[/api/users/<id> - PATCH] Error while updating user: {response}"
         )
-        return response, code
+
+    session.close()
+    return response, code
 
 
 @app.route("/api/summary", methods=["GET"])
@@ -275,7 +259,17 @@ def get_statistics():
         return "Invalid token", 401
 
     logging.info("[/api/summary - GET] Getting statistics for db.")
-    return get_user_statistics(session)
+    session = Session(engine)
+    result, code = get_user_statistics(session)
+    if code == 200:
+        logging.info("[/api/summary - GET] Getting statistics for db success.")
+    else:
+        logging.error(
+            f"[/api/summary - GET] Error while getting statistics for db: {result}"
+        )
+
+    session.close()
+    return result, code
 
 
 if __name__ == "__main__":

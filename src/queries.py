@@ -4,13 +4,6 @@ from sqlalchemy.orm import Session, Query
 from models import User
 import logging
 
-# Set up basic configuration
-logging.basicConfig(
-    level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
-    format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
-    filename="queries.log",  # output to file
-)
-
 
 def build_json_user(user):
     json = jsonify({})
@@ -280,3 +273,51 @@ def get_user_statistics(session: Session) -> tuple[Response, int]:
 
     logging.info("Statistics fetched.")
     return jsonify(stats), 200
+
+
+def create_users(user_data, session):
+    for user in user_data:
+        id_ = user.get("id")
+        first_name = user.get("first_name")
+        last_name = user.get("last_name")
+        company_name = user.get("company_name")
+        city = user.get("city")
+        state = user.get("state")
+        zip_ = user.get("zip")
+        email = user.get("email")
+        age = user.get("age")
+        web = user.get("web")
+
+        try:
+            session.add(
+                User(
+                    id=id_,
+                    first_name=first_name,
+                    last_name=last_name,
+                    company_name=company_name,
+                    city=city,
+                    state=state,
+                    zip=zip_,
+                    email=email,
+                    web=web,
+                    age=age,
+                )
+            )
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            print(f"Error:{e}")
+            session.rollback()
+            return jsonify({"message": f"Error: {e}"}), 404
+        else:
+            logging.info("Data with user id:{id} created.")
+        finally:
+            logging.info("Trying to commit.")
+
+        try:
+            session.commit()
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            session.rollback()
+            return jsonify({"message": f"Error: {e}"}), 404
+
+    return jsonify({"message": "Users Created"}), 200
