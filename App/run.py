@@ -53,12 +53,12 @@ limiter = Limiter(
 
 
 # setting up api doc
-app.config["SWAGGER"] = {
-    "title": "Your API Title",
-    "uiversion": 3,
-    "openapi": "3.0.0",  # Specify the OpenAPI version
-    "url": "http://localhost:5000/api",
-}
+@app.route("/apispec_1.json", methods=["GET"])
+def openapi_spec():
+    with open("../openapi3_0.json") as json_file:
+        file = json.load(json_file)
+    return file, 200
+
 
 swagger = Swagger(app)
 
@@ -98,13 +98,6 @@ def my_first_app():
         return "You are not logged in. Please POST to /login to log in", 401
 
     return "Welcome!", 200
-
-
-@app.route("/api", methods=["GET"])
-def openapi_spec():
-    with open("../openapi3_0.json") as json_file:
-        file = json.load(json_file)
-    return file, 200
 
 
 # Run to check JWT Auth

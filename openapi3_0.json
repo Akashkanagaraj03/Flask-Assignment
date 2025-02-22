@@ -5,6 +5,16 @@
     "description": "API to manipulate the User table in the database.",
     "version": "1.0.0"
   },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:5000",
+      "description": "Local server"
+    },
+    {
+      "url": "http://127.0.0.1:5001",
+      "description": "Docker server"
+    }
+  ],
   "paths": {
     "/": {
       "get": {
