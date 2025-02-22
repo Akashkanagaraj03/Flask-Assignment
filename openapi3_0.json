@@ -1,0 +1,741 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Flask API Assignment",
+    "description": "API to manipulate the User table in the database.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "End Point fetches our login status",
+        "description": "This endpoint checks whether the user is logged in or not.",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "The user is logged in and the welcome message is returned."
+          },
+          "401": {
+            "description": "User is not logged in, prompts to log in via POST to /login."
+          }
+        }
+      }
+    },
+    "/api/summary": {
+      "get": {
+        "summary": "Retrieves statistics about the users in the database.",
+        "description": "Fetches statistics for the users in the database, including data like average age, city and company counts, and age ranges.",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "average_age": {
+                      "type": "number",
+                      "description": "The average age of the users."
+                    },
+                    "total_cities": {
+                      "type": "integer",
+                      "description": "Total number of unique cities."
+                    },
+                    "total_companies": {
+                      "type": "integer",
+                      "description": "Total number of unique companies."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized due to invalid token."
+          },
+          "500": {
+            "description": "Server error while fetching statistics."
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Fetch user records",
+        "description": "Retrieves user records with pagination, sorting, and searching options.",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 5
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully"
+          },
+          "400": {
+            "description": "Bad request."
+          },
+          "500": {
+            "description": "Server error."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "description": "Allows creating new user records.",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "User ID"
+                    },
+                    "first_name": {
+                      "type": "string",
+                      "description": "User first name"
+                    },
+                    "last_name": {
+                      "type": "string",
+                      "description": "User last name"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "User email address"
+                    },
+                    "age": {
+                      "type": "integer",
+                      "description": "User age"
+                    },
+                    "city": {
+                      "type": "string",
+                      "description": "User city"
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "User state"
+                    },
+                    "zip": {
+                      "type": "string",
+                      "description": "User zip code"
+                    },
+                    "company_name": {
+                      "type": "string",
+                      "description": "User company name"
+                    },
+                    "web": {
+                      "type": "string",
+                      "description": "User web address"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created successfully."
+          },
+          "400": {
+            "description": "Invalid user data."
+          },
+          "401": {
+            "description": "Unauthorized access."
+          },
+          "500": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/api/users/{id_}": {
+      "delete": {
+        "description": "Deletes a user record by their ID.",
+        "parameters": [
+          {
+            "description": "ID of the user to delete.",
+            "in": "path",
+            "name": "id_",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Authorization token for access control.",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized access due to invalid or missing token."
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Server error while deleting the user."
+          }
+        },
+        "summary": "Deletes a user record by ID.",
+        "tags": [
+          "Users"
+        ]
+      },
+      "get": {
+        "description": "Fetches a user record by ID.",
+        "parameters": [
+          {
+            "description": "ID of the user to retrieve.",
+            "in": "path",
+            "name": "id_",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Authorization token for access control.",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "User ID"
+                    },
+                    "first_name": {
+                      "type": "string",
+                      "description": "User first name"
+                    },
+                    "last_name": {
+                      "type": "string",
+                      "description": "User last name"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "User email address"
+                    },
+                    "age": {
+                      "type": "integer",
+                      "description": "User age"
+                    },
+                    "city": {
+                      "type": "string",
+                      "description": "User city"
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "User state"
+                    },
+                    "zip": {
+                      "type": "string",
+                      "description": "User zip code"
+                    },
+                    "company_name": {
+                      "type": "string",
+                      "description": "User company name"
+                    },
+                    "web": {
+                      "type": "string",
+                      "description": "User web address"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized due to invalid token."
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Server error while retrieving user."
+          }
+        },
+        "summary": "Fetches a user record by ID.",
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "description": "Updates selected fields of a user record by their ID.",
+        "parameters": [
+          {
+            "description": "ID of the user to update.",
+            "in": "path",
+            "name": "id_",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Authorization token for access control.",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "User data with the fields to be updated.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "User ID"
+                  },
+                  "first_name": {
+                    "type": "string",
+                    "description": "User first name"
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "description": "User last name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "User email address"
+                  },
+                  "age": {
+                    "type": "integer",
+                    "description": "User age"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "User city"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "User state"
+                  },
+                  "zip": {
+                    "type": "string",
+                    "description": "User zip code"
+                  },
+                  "company_name": {
+                    "type": "string",
+                    "description": "User company name"
+                  },
+                  "web": {
+                    "type": "string",
+                    "description": "User web address"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "User ID"
+                    },
+                    "first_name": {
+                      "type": "string",
+                      "description": "User first name"
+                    },
+                    "last_name": {
+                      "type": "string",
+                      "description": "User last name"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "User email address"
+                    },
+                    "age": {
+                      "type": "integer",
+                      "description": "User age"
+                    },
+                    "city": {
+                      "type": "string",
+                      "description": "User city"
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "User state"
+                    },
+                    "zip": {
+                      "type": "string",
+                      "description": "User zip code"
+                    },
+                    "company_name": {
+                      "type": "string",
+                      "description": "User company name"
+                    },
+                    "web": {
+                      "type": "string",
+                      "description": "User web address"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user data (invalid JSON or missing fields)."
+          },
+          "401": {
+            "description": "Unauthorized access due to invalid or missing token."
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Server error while updating the user."
+          }
+        },
+        "summary": "Updates specific fields of an existing user by their ID.",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing user record by their ID.",
+        "parameters": [
+          {
+            "description": "ID of the user to update.",
+            "in": "path",
+            "name": "id_",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Authorization token for access control.",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "User data to update the existing user.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "User ID"
+                  },
+                  "first_name": {
+                    "type": "string",
+                    "description": "User first name"
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "description": "User last name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "User email address"
+                  },
+                  "age": {
+                    "type": "integer",
+                    "description": "User age"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "User city"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "User state"
+                  },
+                  "zip": {
+                    "type": "string",
+                    "description": "User zip code"
+                  },
+                  "company_name": {
+                    "type": "string",
+                    "description": "User company name"
+                  },
+                  "web": {
+                    "type": "string",
+                    "description": "User web address"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "User ID"
+                    },
+                    "first_name": {
+                      "type": "string",
+                      "description": "User first name"
+                    },
+                    "last_name": {
+                      "type": "string",
+                      "description": "User last name"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "User email address"
+                    },
+                    "age": {
+                      "type": "integer",
+                      "description": "User age"
+                    },
+                    "city": {
+                      "type": "string",
+                      "description": "User city"
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "User state"
+                    },
+                    "zip": {
+                      "type": "string",
+                      "description": "User zip code"
+                    },
+                    "company_name": {
+                      "type": "string",
+                      "description": "User company name"
+                    },
+                    "web": {
+                      "type": "string",
+                      "description": "User web address"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user data (invalid JSON or missing fields)."
+          },
+          "401": {
+            "description": "Unauthorized access due to invalid or missing token."
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Server error while updating the user."
+          }
+        },
+        "summary": "Updates an existing user by their ID.",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/check_auth": {
+      "get": {
+        "description": "This endpoint verifies the validity of the JWT token passed in the Authorization header.",
+        "parameters": [
+          {
+            "description": "JWT token in the Authorization header to verify authentication.",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The JWT token is valid, authentication is successful."
+          },
+          "400": {
+            "description": "Missing or improperly formatted JWT token in the Authorization header."
+          },
+          "401": {
+            "description": "Invalid or expired JWT token, authentication failed."
+          }
+        },
+        "summary": "Endpoint to check JWT authentication status",
+        "tags": [
+          "Auth"
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "first_name": {
+            "type": "string",
+            "description": "User first name"
+          },
+          "last_name": {
+            "type": "string",
+            "description": "User last name"
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address"
+          },
+          "age": {
+            "type": "integer",
+            "description": "User age"
+          },
+          "city": {
+            "type": "string",
+            "description": "User city"
+          },
+          "state": {
+            "type": "string",
+            "description": "User state"
+          },
+          "zip": {
+            "type": "string",
+            "description": "User zip code"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "User company name"
+          },
+          "web": {
+            "type": "string",
+            "description": "User web address"
+          }
+        }
+      },
+      "UserStats": {
+        "type": "object",
+        "properties": {
+          "average_age": {
+            "type": "number",
+            "description": "The average age of the users."
+          },
+          "total_cities": {
+            "type": "integer",
+            "description": "Total number of unique cities."
+          },
+          "total_companies": {
+            "type": "integer",
+            "description": "Total number of unique companies."
+          }
+        }
+      }
+    }
+  }
+}

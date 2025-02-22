@@ -1,9 +1,8 @@
 # imports for run.py
 import logging
-from flask import Flask, request, jsonify, session as flask_session
+from flask import Flask, request, jsonify, session as flask_session, json
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flasgger import Swagger
 import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -16,7 +15,7 @@ from queries import (
     get_user_statistics,
     create_users,
 )
-
+from flasgger import Swagger
 
 # setting up logging
 logging.basicConfig(
@@ -52,35 +51,16 @@ limiter = Limiter(
     app=app,
 )
 
-# setting up swagger
-# Swagger definition for the User schema
+
+# setting up api doc
 app.config["SWAGGER"] = {
-    "definitions": {
-        "User": {
-            "type": "object",
-            "properties": {
-                "id": {"type": "integer", "description": "User ID"},
-                "first_name": {"type": "string", "description": "User first name"},
-                "last_name": {"type": "string", "description": "User last name"},
-                "company_name": {"type": "string", "description": "User company name"},
-                "city": {"type": "string", "description": "User city"},
-                "state": {"type": "string", "description": "User state"},
-                "zip": {"type": "string", "description": "User zip code"},
-                "email": {"type": "string", "description": "User email address"},
-                "web": {"type": "string", "description": "User web address"},
-                "age": {"type": "integer", "description": "User age"},
-            },
-            "required": [],  # You can add required fields here, e.g., ['first_name', 'last_name', 'email']
-        }
-    }
+    "title": "Your API Title",
+    "uiversion": 3,
+    "openapi": "3.0.0",  # Specify the OpenAPI version
+    "url": "http://localhost:5000/api",
 }
+
 swagger = Swagger(app)
-
-
-@app.route("/apidocs/")
-def apidocs():
-    """This endpoint is used to view the Swagger UI."""
-    return "Swagger UI should be visible here"
 
 
 # Method to verify JWT token
@@ -113,18 +93,6 @@ def verify_token(token: str, api: str):
 @app.route("/", methods=["GET"])
 @limiter.limit("100 per hour")  # set limiter to 100 per hour
 def my_first_app():
-    """End Point fetches our login status
-    ---
-    tags:
-    - Auth
-    summary: Get the login status of the user
-    description: This endpoint checks whether the user is logged in or not.
-    responses:
-      200:
-        description: The user is logged in and the welcome message is returned.
-      401:
-        description: User is not logged in, prompts to log in via POST to /login.
-    """
     if not flask_session.get("logged_in"):  # check if logged in
         logging.info("[/] User is not logged in")
         return "You are not logged in. Please POST to /login to log in", 401
@@ -132,31 +100,17 @@ def my_first_app():
     return "Welcome!", 200
 
 
+@app.route("/api", methods=["GET"])
+def openapi_spec():
+    with open("../openapi3_0.json") as json_file:
+        file = json.load(json_file)
+    return file, 200
+
+
 # Run to check JWT Auth
 @app.route("/check_auth", methods=["GET"])
 @limiter.limit("100 per hour")
 def check_auth():
-    """Endpoint to check JWT authentication status
-    ---
-    tags:
-      - Auth
-    summary: Check JWT authentication
-    description: This endpoint verifies the validity of the JWT token passed in the Authorization header.
-    parameters:
-      - in: header
-        name: Authorization
-        required: true
-        description: JWT token in the Authorization header to verify authentication.
-        schema:
-          type: string
-    responses:
-      200:
-        description: The JWT token is valid, authentication is successful.
-      401:
-        description: Invalid or expired JWT token, authentication failed.
-      400:
-        description: Missing or improperly formatted JWT token in the Authorization header.
-    """
     # Extract JWT token from Authorization header and verify it
     return verify_token(request.headers.get("Authorization"), "/check_auth - GET")
 
@@ -185,51 +139,6 @@ def login():
 @app.route("/api/users", methods=["GET"])  # to-do
 @limiter.limit("10 per hour")
 def fetch_users():
-    """
-    Endpoint to fetch user records with support for pagination, sorting, and searching
-    ---
-    tags:
-      - Users
-    summary: Fetch user records
-    description: This endpoint retrieves user records with options for pagination, sorting, and searching by first_name, last_name, or city.
-    parameters:
-      - in: query
-        name: page
-        required: false
-        description: Page number for paginated results.
-        schema:
-          type: integer
-          default: 1
-      - in: query
-        name: limit
-        required: false
-        description: Number of results per page.
-        schema:
-          type: integer
-          default: 5
-      - in: query
-        name: sort
-        required: false
-        description: Field to sort by (can include "-" for descending order, e.g., "-age").
-        schema:
-          type: string
-          default: "id"
-      - in: query
-        name: search
-        required: false
-        description: Partial text to search users by first_name, last_name, or city.
-        schema:
-          type: string
-          default: ""
-    responses:
-      200:
-        description: Users retrieved successfully
-      400:
-        description: Bad request due to missing or invalid parameters.
-      500:
-        description: Server error while retrieving users."""
-    # Fetches all the rows from the "user" table from the database
-
     # establish session with db
     session = Session(engine)
 
@@ -262,42 +171,6 @@ def fetch_users():
 # Add ALL the given users to the table
 @app.route("/api/users", methods=["POST"])  # to-do
 def add_users():
-    """
-    Endpoint to create a new user record
-    ---
-    tags:
-      - Users
-    summary: Create a new user
-    description: This endpoint allows the creation of new user records. The user data is passed in the body, and authorization is required through the Authorization header.
-    parameters:
-      - in: header
-        name: Authorization
-        required: true
-        description: Authorization token for access control.
-        schema:
-          type: string
-      - in: body
-        name: user_data
-        required: true
-        description: List of user objects to create new users.
-        schema:
-          type: array
-          items:
-            $ref: '#/definitions/User'
-    responses:
-      200:
-        description: User created successfully
-        schema:
-          type: array
-          items:
-            $ref: '#/definitions/User'
-      400:
-        description: Invalid user data (invalid JSON or missing fields).
-      401:
-        description: Unauthorized access due to invalid or missing token.
-      500:
-        description: Server error while creating the user."""
-
     response, code = verify_token(
         request.headers.get("Authorization"), "/api/users - GET/POST"
     )
@@ -327,43 +200,13 @@ def add_users():
         )
 
     session.close()
-    return jsonify(result), code
+    return result, code
 
 
 # Fetch user with ID : id_
 @app.route("/api/users/<int:id_>", methods=["GET"])
 @limiter.limit("10 per hour")
 def get_user(id_):
-    """
-    Fetches a user record by ID.
-    ---
-    tags:
-      - Users
-    description: Fetches a user record by ID.
-    parameters:
-      - name: id_
-        in: path
-        type: integer
-        required: true
-        description: ID of the user to retrieve.
-      - name: Authorization
-        in: header
-        type: string
-        required: true
-        description: Authorization token for access control.
-    responses:
-      200:
-        description: User retrieved successfully
-        schema:
-          $ref: '#/definitions/User'
-      401:
-        description: Unauthorized due to invalid token.
-      404:
-        description: User not found.
-      500:
-        description: Server error while retrieving user.
-    """
-
     session = Session(engine)
     search, code = search_user_by_id(session, id_)
 
@@ -380,50 +223,12 @@ def get_user(id_):
         return jsonify({"error": "Unknown error code"}), code
 
     session.close()
-    return jsonify(search), 200
+    return search, 200
 
 
 # Update ALL the fields of a user with ID : id_
 @app.route("/api/users/<int:id_>", methods=["PUT"])
 def update_user(id_):
-    """
-    Updates an existing user by their ID.
-    ---
-    tags:
-      - Users
-    description: Updates an existing user record by their ID.
-    parameters:
-      - name: id_
-        in: path
-        type: integer
-        required: true
-        description: ID of the user to update.
-      - name: Authorization
-        in: header
-        type: string
-        required: true
-        description: Authorization token for access control.
-      - name: user_data
-        in: body
-        type: object
-        required: true
-        description: User data to update the existing user.
-        schema:
-          $ref: '#/definitions/User'
-    responses:
-      200:
-        description: User updated successfully
-        schema:
-          $ref: '#/definitions/User'
-      400:
-        description: Invalid user data (invalid JSON or missing fields).
-      401:
-        description: Unauthorized access due to invalid or missing token.
-      404:
-        description: User not found.
-      500:
-        description: Server error while updating the user."""
-
     response, code = verify_token(
         request.headers.get("Authorization"), f"/api/users/{id_} - PUT"
     )
@@ -456,33 +261,6 @@ def update_user(id_):
 # Delete the user with ID : id_
 @app.route("/api/users/<int:id_>", methods=["DELETE"])
 def delete_user(id_):
-    """
-    Deletes a user record by ID.
-    ---
-    tags:
-      - Users
-    description: Deletes a user record by their ID.
-    parameters:
-      - name: id_
-        in: path
-        type: integer
-        required: true
-        description: ID of the user to delete.
-      - name: Authorization
-        in: header
-        type: string
-        required: true
-        description: Authorization token for access control.
-    responses:
-      200:
-        description: User deleted successfully
-      401:
-        description: Unauthorized access due to invalid or missing token.
-      404:
-        description: User not found.
-      500:
-        description: Server error while deleting the user.
-    """
     response, code = verify_token(
         request.headers.get("Authorization"), f"/api/users/{id_} - DELETE"
     )
@@ -504,45 +282,6 @@ def delete_user(id_):
 # Update SOME of the fields of a user with ID : id_
 @app.route("/api/users/<int:id_>", methods=["PATCH"])
 def patch_user(id_):
-    """
-    Updates specific fields of an existing user by their ID.
-    ---
-    tags:
-      - Users
-    description: Updates selected fields of a user record by their ID.
-    parameters:
-      - name: id_
-        in: path
-        type: integer
-        required: true
-        description: ID of the user to update.
-      - name: Authorization
-        in: header
-        type: string
-        required: true
-        description: Authorization token for access control.
-      - name: user_data
-        in: body
-        type: object
-        required: true
-        description: User data with the fields to be updated.
-        schema:
-          $ref: '#/definitions/User'
-    responses:
-      200:
-        description: User updated successfully
-        schema:
-          $ref: '#/definitions/User'
-      400:
-        description: Invalid user data (invalid JSON or missing fields).
-      401:
-        description: Unauthorized access due to invalid or missing token.
-      404:
-        description: User not found.
-      500:
-        description: Server error while updating the user.
-    """
-
     response, code = verify_token(
         request.headers.get("Authorization"), f"/api/users/{id_} - PATCH"
     )
@@ -574,72 +313,6 @@ def patch_user(id_):
 @app.route("/api/summary", methods=["GET"])
 @limiter.limit("5 per hour")
 def get_statistics():
-    """
-    Retrieves statistics about the users in the database.
-    ---
-    tags:
-      - Users
-    description: Fetches statistics for the users in the database, including data like average age, city and company counts, and age ranges.
-    parameters:
-      - name: Authorization
-        in: header
-        type: string
-        required: true
-        description: Authorization token for access control.
-    responses:
-      200:
-        description: Statistics retrieved successfully
-        schema:
-          type: object
-          properties:
-            average_age:
-              type: number
-              description: The average age of the users.
-            total_cities:
-              type: integer
-              description: Total number of unique cities.
-            total_companies:
-              type: integer
-              description: Total number of unique companies.
-            count_by_city:
-              type: array
-              items:
-                type: object
-                properties:
-                  city:
-                    type: string
-                    description: The name of the city.
-                  user_count:
-                    type: integer
-                    description: The count of users from that city.
-            count_by_company:
-              type: array
-              items:
-                type: object
-                properties:
-                  company:
-                    type: string
-                    description: The name of the company.
-                  user_count:
-                    type: integer
-                    description: The count of users working at that company.
-            age_ranges:
-              type: array
-              items:
-                type: object
-                properties:
-                  age_range:
-                    type: string
-                    description: The age range.
-                  user_count:
-                    type: integer
-                    description: The count of users within that age range.
-      401:
-        description: Unauthorized due to invalid token.
-      500:
-        description: Server error while fetching statistics.
-    """
-
     if not verify_token(request.headers.get("Authorization"), "/api/summary - GET"):
         return "Invalid token", 401
 
@@ -669,6 +342,5 @@ def get_statistics():
     #         {"age_range": range, "user_count": count} for range, count in age_ranges
     #     ],
     # }
-
     session.close()
     return result, code
