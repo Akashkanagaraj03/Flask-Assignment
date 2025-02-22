@@ -77,19 +77,36 @@ pytest
 
 ## Code Quality Tools
 ```mermaid
-graph TD;
-  ID["ID"] -->|Unique Identifier| Person
-  FirstName["First Name"] --> Person
-  LastName["Last Name"] --> Person
-  Company["Company Name"] --> Person
-  Age["Age"] --> Person
-  Address["Address"] --> Person
-  City["City"] --> Address
-  State["State"] --> Address
-  Zip["Zip Code"] --> Address
-  Contact["Contact Info"] --> Person
+graph LR;
+  ID["ID"] -->|Unique Identifier| User
+  FirstName["First Name"] --> User
+  LastName["Last Name"] --> User
+  Company["Company Name"] --> User
+  Age["Age"] --> User
   Email["Email"] --> Contact
   Web["Website"] --> Contact
+  Zip["Zip Code"] --> User
+  State["State"] --> User
+  City["City"] --> User
+  Contact["Contact Info"] -->|Includes| Email & Web
+
+  subgraph User Information
+    ID
+    FirstName
+    LastName
+    Age
+    Company
+    City
+    State
+    Zip
+  end
+
+  subgraph Contact Details
+    Email
+    Web
+  end
+
+  User -->|Has| Contact
 ```
 
 
