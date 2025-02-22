@@ -76,17 +76,21 @@ pytest
 ```
 
 ## Code Quality Tools
-Run the following commands for linting and formatting:
-```bash
-ruff .  # Linting
-black .  # Formatting
-```
+graph TD;
+  ID["ID"] -->|Unique Identifier| Person
+  First_Name["First Name"] --> Person
+  Last_Name["Last Name"] --> Person
+  Company_Name["Company Name"] --> Person
+  Age["Age"] --> Person
+  City["City"] --> Address
+  State["State"] --> Address
+  Zip["Zip"] --> Address
+  Email["Email"] --> Contact
+  Web["Web"] --> Contact
 
-To use `pre-commit` hooks:
-```bash
-pre-commit install
-pre-commit run --all-files
-```
+  Person --> Address
+  Person --> Contact
+
 
 ## Logging
 The application logs meaningful messages for debugging in `app.log`.
