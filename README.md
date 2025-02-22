@@ -24,34 +24,27 @@ Make sure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone 
-cd flask-user-api
+git clone <url>
+cd Flask-Assignment
 ```
 
-### 2. Set Up Virtual Environment
-#### Using `pip`:
+### 2. Build the Docker Image
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+docker build -t <container_name> .
 ```
 
-#### Using `poetry`:
+
+### 3. Start the Docker Container
 ```bash
-poetry install
-poetry shell
+docker container run -p 5000:<port_that_you_want_to_expose> <container_name>
 ```
 
-### 3. Configure Database
-Ensure PostgreSQL is running and create a database:
-```sql
-CREATE DATABASE user_db;
+Check if Container has stared:
+```bash
+docker container ls
 ```
-
-Modify `app.py` with your database credentials:
-```python
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://<user>:<password>@localhost:5432/user_db"
-```
+Note down the first 4 characters of the container, as we will use it to access it.
+It is used as <container_id>
 
 ### 4. Run Migrations
 ```bash
