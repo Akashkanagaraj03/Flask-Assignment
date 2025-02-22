@@ -98,7 +98,7 @@ def search_users(
 
     if query.count() == 0:
         logging.info("No users found.")
-        return jsonify({"message": "No users found"}), 404
+        return jsonify({"message": "No users found"}), 200
 
     logging.info(f"Found {query.count()} users")
     return build_json_users(query), 200

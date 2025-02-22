@@ -6,7 +6,7 @@ from models import User
 
 
 try:
-    engine = create_engine("sqlite:///database.db")
+    engine = create_engine("sqlite:///../Database/database.db")
     session = Session(engine)
 except Exception as e:
     logging.critical(f"[__main__] Database connection failed: {e}")
@@ -15,7 +15,7 @@ else:
 
 
 def main():
-    with open("users.json") as file:
+    with open("../Database/Sources/users.json") as file:
         users = json.load(file)
         for user in users:
             create_user(

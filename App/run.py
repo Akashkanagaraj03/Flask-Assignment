@@ -1,4 +1,4 @@
-# imports for app.py
+# imports for run.py
 import logging
 from flask import Flask, request, jsonify, session as flask_session
 from flask_limiter import Limiter
@@ -22,13 +22,13 @@ from queries import (
 logging.basicConfig(
     level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
     format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
-    filename="app.log",  # output to file
+    filename="../app.log",  # output to file
 )
 
 
 # connecting to database.db and initialising an engine
 try:
-    engine = create_engine("sqlite:///database.db")
+    engine = create_engine("sqlite:///../Database/database.db")
 except Exception as e:
     logging.critical(f"[__main__] Database connection failed: {e}")
 else:
@@ -134,6 +134,7 @@ def my_first_app():
 
 # Run to check JWT Auth
 @app.route("/check_auth", methods=["GET"])
+@limiter.limit("100 per hour")
 def check_auth():
     """Endpoint to check JWT authentication status
     ---
@@ -158,6 +159,26 @@ def check_auth():
     """
     # Extract JWT token from Authorization header and verify it
     return verify_token(request.headers.get("Authorization"), "/check_auth - GET")
+
+
+# login page
+@app.route("/login", methods=["POST"])
+def login():
+    payload = request.get_json()
+    if payload.get("uid") == "admin" and payload.get("pass") == "1243":
+        flask_session["logged_in"] = True
+        token = jwt.encode(
+            {"user": request.args.get("uid")},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+        logging.info("[/login] Logged in")
+        return jsonify({"token": token})
+
+    else:
+        flask_session["logged_in"] = False
+        logging.info("[/login] Failed to log in, check credentials")
+        return "Failed to log in", 401
 
 
 # Fetch ALL the users with the specified args
@@ -235,7 +256,7 @@ def fetch_users():
 
     # close session and return results
     session.close()
-    return jsonify(result), code
+    return result, code
 
 
 # Add ALL the given users to the table
