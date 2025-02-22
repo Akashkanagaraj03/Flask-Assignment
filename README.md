@@ -76,20 +76,23 @@ pytest
 ```
 
 ## Code Quality Tools
+```mermaid
 graph TD;
   ID["ID"] -->|Unique Identifier| Person
-  First_Name["First Name"] --> Person
-  Last_Name["Last Name"] --> Person
-  Company_Name["Company Name"] --> Person
+  FirstName["First Name"] --> Person
+  LastName["Last Name"] --> Person
+  Company["Company Name"] --> Person
   Age["Age"] --> Person
+  Address["Address"] --> Person
   City["City"] --> Address
   State["State"] --> Address
-  Zip["Zip"] --> Address
+  Zip["Zip Code"] --> Address
+  Contact["Contact Info"] --> Person
   Email["Email"] --> Contact
-  Web["Web"] --> Contact
+  Web["Website"] --> Contact
+```
 
-  Person --> Address
-  Person --> Contact
+
 
 
 ## Logging
