@@ -14,3 +14,7 @@ EXPOSE 5000
 ENV FLASK_APP=App/run.py
 ENV FLASK_RUN_HOST="0.0.0.0"
 ENV FLASK_RUN_PORT="5000"
+
+CMD ["poetry", "run", "python", "models.py"]
+CMD ["poetry", "run", "python", "populate_db.py"]
+CMD ["poetry", "run", "flask", "run"]
