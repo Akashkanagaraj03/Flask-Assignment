@@ -1,28 +1,30 @@
 # FLASK APP
 
 ## Overview
-This is a REST API built using Flask to manage user data, backed by a PostgreSQL database. The API supports CRUD operations, searching, sorting, and basic analytics.
+This is a Flask Application that has API Endpoints to perform CRUD operations on User data that is stored locally.
 
 ## Features
-- User management (Create, Read, Update, Delete)
-- Pagination and search functionality
-- OpenAPI documentation
+- User management (Create, Read, Update, Delete)  # refer the User Model
+- User search using partial names and cities with pages
+- Get detailed summary of the users
+- OpenAPI 3.0 Documentation for the end points
 - Logging for debugging
-- Unit and functional tests
-- Pre-commit hooks and code quality tools (ruff, black, poetry)
+- Functional Tests checking the APIs for code 200
+- Pre-commit hooks and code quality tools (ruff, black)
+- Self Contained dependencies with poetry
+- Containerised for easy deployment.
+- JWT Authentication using username and password.
+- Rate-Limiters for end points.
 
 ## Prerequisites
 Make sure you have the following installed:
-- Python 3.10+
-- PostgreSQL
-- `pip` or `poetry`
-- `virtualenv` (if using `pip`)
+- Docker
 
 ## Setup
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/nee23thu/flask-user-api.git
+git clone 
 cd flask-user-api
 ```
 
