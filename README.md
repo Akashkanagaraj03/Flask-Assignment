@@ -77,36 +77,19 @@ pytest
 
 ## Code Quality Tools
 ```mermaid
-graph LR;
-  ID["ID"] -->|Unique Identifier| User
-  FirstName["First Name"] --> User
-  LastName["Last Name"] --> User
-  Company["Company Name"] --> User
-  Age["Age"] --> User
-  Email["Email"] --> Contact
-  Web["Website"] --> Contact
-  Zip["Zip Code"] --> User
-  State["State"] --> User
-  City["City"] --> User
-  Contact["Contact Info"] -->|Includes| Email & Web
-
-  subgraph User Information
-    ID
-    FirstName
-    LastName
-    Age
-    Company
-    City
-    State
-    Zip
-  end
-
-  subgraph Contact Details
-    Email
-    Web
-  end
-
-  User -->|Has| Contact
+erDiagram
+    USERS {
+        INT ID PK "Primary Key, Auto Increment"
+        VARCHAR(50) FirstName "Not Null"
+        VARCHAR(50) LastName "Not Null"
+        VARCHAR(100) CompanyName
+        INT Age
+        VARCHAR(50) City
+        VARCHAR(50) State
+        VARCHAR(20) Zip
+        VARCHAR(100) Email "Unique, Not Null"
+        VARCHAR(100) Web
+    }
 ```
 
 
