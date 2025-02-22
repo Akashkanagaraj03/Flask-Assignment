@@ -72,3 +72,31 @@ def test_delete_user(client):
     headers = {'Authorization': f'Bearer {token}'}
     response = client.delete('/api/users/1', headers=headers)
     assert response.status_code == 200
+
+def test_update_user(client):
+    """Tests updating a user with PUT."""
+    token = test_get_auth_token(client)
+    headers = {'Authorization': f'Bearer {token}'}
+    data = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "email": "jane.doe@example.com",
+        "age": 28,
+        "city": "San Francisco",
+        "state": "CA",
+        "zip": "94105",
+        "company_name": "TechCorp",
+        "web": "http://techcorp.com"
+    }
+    response = client.put('/api/users/1', json=data, headers=headers)
+    assert response.status_code == 200
+
+def test_patch_user(client):
+    """Tests partially updating a user with PATCH."""
+    token = test_get_auth_token(client)
+    headers = {'Authorization': f'Bearer {token}'}
+    data = {
+        "city": "Los Angeles"
+    }
+    response = client.patch('/api/users/1', json=data, headers=headers)
+    assert response.status_code == 200
