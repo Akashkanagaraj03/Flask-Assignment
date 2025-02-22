@@ -21,7 +21,7 @@ from flasgger import Swagger
 logging.basicConfig(
     level=logging.DEBUG,  # available levels - info, debug, warning, error, critical
     format="%(asctime)s - %(levelname)s - %(message)s",  # Format of the log message
-    filename="../app.log",  # output to file
+    filename="app.log",  # output to file
 )
 
 
