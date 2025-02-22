@@ -108,9 +108,9 @@ Pre-Commit Hooks have been enabled along with black and ruff, which runs automat
 This project took me three nights to complete, as shown in the commit history.
 
 ### What was the most challenging?
-Learning most of the tools used for the first time was the major hurdle. It was more time consuming that I had thought.
+Learning most of the tools used for the first time was the major hurdle. It was more time consuming than I had thought.
 Learning these and then applying them took most of my time, which would be reflected by the slow commit rates, as I was 
-also looking at the documenations and resources as I code.
+also looking at the documentations and resources as I coded.
 
 
 ### What was unclear?
