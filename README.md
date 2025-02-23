@@ -37,7 +37,7 @@ docker build -t <container_name> .
 ```bash
 docker container run -d -p 5000:<port> <container_name>
 ```
-Note: If you don't want to detach the cli of the container, do not use -d.
+Note: If you don't want to detach the cli of the container, do not use ```-d```.
 Use any port that you want to run the flask app on.
 
 Check if Container has stared: (Only in detached mode/different terminal session)
@@ -45,10 +45,10 @@ Check if Container has stared: (Only in detached mode/different terminal session
 docker container ls
 ```
 Note down the first 4 characters of the container, as we will use it to access it.
-It is used as <container_id>
+It is used as ```<container_id>```
 
 The flask server has started and is accessible at http://localhost:<port>
-The API Documentation can be found at http://localhost:<port>/apidocs
+The API Documentation can be found at ```http://localhost:<port>/apidocs```
 
 ### 4. Stopping the Docker Container:
 ```bash
