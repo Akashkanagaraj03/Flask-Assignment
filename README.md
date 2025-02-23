@@ -126,5 +126,5 @@ Yes, the difficulty is appropriate. However given longer time, the final app and
 ### Why the chosen tools?
 Most of the tools chosen were for convenience and clear documentation to learn from.
 
-### Ay assumptions or decisions made?
+### Any assumptions or decisions made?
 Testing is only done for 200 response codes, as a very basic implementation.
