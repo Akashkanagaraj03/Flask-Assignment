@@ -47,7 +47,7 @@ docker container ls
 Note down the first 4 characters of the container, as we will use it to access it.
 It is used as ```<container_id>```
 
-The flask server has started and is accessible at http://localhost:<port>
+The flask server has started and is accessible at ```http://localhost:<port>```
 The API Documentation can be found at ```http://localhost:<port>/apidocs```
 
 ### 4. Stopping the Docker Container:
