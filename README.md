@@ -64,7 +64,7 @@ http://localhost:5000/apidocs
 ## Testing
 When you are inside a docker's CLI, testing can be done using
 ```bash
-cd APp
+cd App
 pytest tests.py -v
 ```
 
