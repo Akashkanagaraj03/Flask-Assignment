@@ -86,7 +86,7 @@ erDiagram
 ```
 
 ## Logging
-Application logs has been created in ```app.log``` inside the docker.
+Application logs has been created in ```app.log``` inside the docker container.
 
 ## Authentication
 To use make changes to the database, you first need to login, this can be done by posting to http://127.0.0.1/login
